@@ -9,13 +9,14 @@ plugins {
 
 repositories {
     maven { // The google mirror is less flaky than mavenCentral()
-        url "https://maven-central.storage-download.googleapis.com/maven2/" }
+        url "https://maven-central.storage-download.googleapis.com/maven2/"
+    }
     mavenCentral()
     mavenLocal()
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 // IMPORTANT: You probably want the non-SNAPSHOT version of gRPC. Make sure you
 // are looking at a tagged version of the example and not "master"!
@@ -52,21 +53,30 @@ protobuf {
 }
 
 // Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
+// 设置源代码集. 在 Gradle 中, 源代码集是一组具有相同目的的源文件. 例如, 你可能有一组用于主应用程序的源文件, 一组用于单元测试的源文件, 等等.
 sourceSets {
+    // main 源代码集. 这是 Java 插件添加的默认源代码集, 用于主应用程序的源代码.
     main {
+        // java 块用于配置 Java 源文件的位置.
         java {
+            // 将 grpc 插件和 protobuf 插件生成的 java 源代码添加到 main 源代码集中.
             srcDirs 'build/generated/source/proto/main/grpc'
             srcDirs 'build/generated/source/proto/main/java'
         }
     }
 }
 
+// 禁用 Application 插件的 startScripts 任务
 startScripts.enabled = false
-
+// 定制创建启动脚本的任务
 task helloWorldServer(type: CreateStartScripts) {
+    // 应用程序的主类名
     mainClassName = 'io.grpc.helloworld.HelloWorldServer'
+    // 应用程序名，也即启动脚本的文件名
     applicationName = 'hello-world-server'
+    // 任务生成的启动脚本存放的路径
     outputDir = new File(project.buildDir, 'tmp')
+    // 启动脚本中设置的 Java 类路径。在这个例子中，类路径被设置为 startScripts.classpath，这意味着它会使用 startScripts 任务的类路径。
     classpath = startScripts.classpath
 }
 
@@ -77,8 +87,12 @@ task helloWorldClient(type: CreateStartScripts) {
     classpath = startScripts.classpath
 }
 
+// 配置 applicationDistribution 任务
+// into('bin') 表示将文件复制到分发包的 bin 目录中。
 applicationDistribution.into('bin') {
+    // 将这 2 个任务的输出复制到目标目录中
     from(helloWorldServer)
     from(helloWorldClient)
+    // 设置文件权限
     fileMode = 0755
 }
